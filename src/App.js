@@ -15,6 +15,51 @@ function App() {
   const [despesaParaEditar, setDespesaParaEditar] = useState(null);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [editingFileId, setEditingFileId] = useState(null);
+  const [newFileName, setNewFileName] = useState('');
+
+  const handleIniciarEdicaoNomeArquivo = (file) => {
+    console.log("Iniciando edição do nome para o arquivo:", file);
+    setEditingFileId(file.id);
+    setNewFileName(file.name);
+  };
+
+  const handleCancelarEdicaoNomeArquivo = () => {
+    setEditingFileId(null);
+    setNewFileName('');
+  };
+
+  const handleSalvarNovoNomeArquivo = async (id) => {
+    console.log("Salvando novo nome para o arquivo ID:", id, "Novo nome:", newFileName);
+    setEstaCarregando(true);
+    setErro(null);
+
+    try {
+      const resposta = await fetch(`${API_BASE_URL}/api/file-upload/${id}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newFileName }),
+      });
+
+      if (!resposta.ok) {
+        const erroData = await resposta.text();
+        throw new Error(`Erro HTTP: ${resposta.status} - ${erroData || 'Falha ao atualizar nome do arquivo'}`);
+      }
+
+      const arquivoAtualizado = await resposta.json();
+      setUploadedFiles((prevFiles) =>
+        prevFiles.map(file => (file.id === id ? { ...file, name: arquivoAtualizado.name } : file))
+      );
+
+    } catch (e) {
+      console.error("Erro ao atualizar nome do arquivo:", e);
+      setErro(e.message);
+    } finally {
+      setEstaCarregando(false);
+      setEditingFileId(null);
+      setNewFileName('');
+    }
+  }
 
   const handleSalvarEdicaoDespesa = async (id, dadosAtualizados) => {
     console.log(`App.js: Tentando ATUALIZAR despesa ID: ${id} com dados:`, dadosAtualizados);
@@ -30,7 +75,7 @@ function App() {
 
     try {
       const resposta = await fetch(`${API_BASE_URL}/api/transactions/${id}/`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -230,14 +275,14 @@ function App() {
 
   const handleFileUploadSubmit = async (formData) => {
     console.log("App.js: Recebido FormData para upload:", formData);
-    
+
     setEstaCarregando(true);
     setErro(null);
 
     try {
       const resposta = await fetch(`${API_BASE_URL}/api/file-upload/`, {
         method: 'POST',
-        body: formData, 
+        body: formData,
       });
 
       if (!resposta.ok) {
@@ -324,7 +369,7 @@ function App() {
   };
 
   return (
-    <div>
+    <div className="app-container">
       <h1 style={{ textAlign: 'center' }}>Meu Registro de Despesas</h1>
       <AddExpenseForm
         onSalvarDespesa={adicionarDespesaHandler}
@@ -342,34 +387,54 @@ function App() {
           onSalvar={handleSalvarNovaCategoria}
         />
       )}
-      <hr style={{margin: '30px 0'}} />
+      <hr style={{ margin: '30px 0' }} />
       <FileUploadForm onFileUpload={handleFileUploadSubmit} />
 
-      <div style={{marginTop: '30px'}}>
+      <div style={{ marginTop: '30px' }}>
         <h2 style={{ textAlign: 'center' }}>Arquivos Enviados</h2>
-        {estaCarregando && uploadedFiles.length === 0 && <p style={{textAlign: 'center'}}>Carregando arquivos...</p>}
-        {erro && <p style={{textAlign: 'center', color: 'red'}}>Erro ao carregar arquivos: {erro}</p>}
-        {!estaCarregando && uploadedFiles.length === 0 && !erro && <p style={{textAlign: 'center'}}>Nenhum arquivo enviado ainda.</p>}
-        
+        {estaCarregando && uploadedFiles.length === 0 && <p style={{ textAlign: 'center' }}>Carregando arquivos...</p>}
+        {erro && <p style={{ textAlign: 'center', color: 'red' }}>Erro ao carregar arquivos: {erro}</p>}
+        {!estaCarregando && uploadedFiles.length === 0 && !erro && <p style={{ textAlign: 'center' }}>Nenhum arquivo enviado ainda.</p>}
+
         {uploadedFiles.length > 0 && (
           <ul style={{ listStyleType: 'none', padding: 0, maxWidth: '600px', margin: '0 auto' }}>
             {uploadedFiles.map(file => (
-              <li key={file.id} style={{ border: '1px solid #ddd', padding: '10px', marginBottom: '10px', borderRadius: '4px' }}>
-                <p><strong>Nome:</strong> {file.name}</p>
-                <p><strong>Tipo:</strong> {file.file_type}</p>
-                {/* O campo 'file.file' é um caminho. Se for um caminho relativo ao seu backend, 
-                    você precisaria construir a URL completa para um link de download, 
-                    ou sua API pode fornecer uma URL de download direta.
-                    Por enquanto, apenas exibimos o caminho. */}
-                <p><strong>Caminho/Link:</strong> {file.file}</p> 
-                {/* Exemplo de link se o backend servir os arquivos diretamente:
-                <p>
-                  <strong>Link:</strong> 
-                  <a href={`${API_BASE_URL}${file.file}`} target="_blank" rel="noopener noreferrer">
-                    Ver Arquivo
-                  </a>
-                </p>
-                */}
+              <li key={file.id} className="list-item">
+                {editingFileId === file.id ? (
+                  <div>
+                    <input
+                      type="text"
+                      value={newFileName}
+                      onChange={(e) => setNewFileName(e.target.value)}
+                      style={{ marginRight: '10px', padding: '5px', width: '60%' }}
+                    />
+                    <button
+                      onClick={() => handleSalvarNovoNomeArquivo(file.id)}
+                      style={{ backgroundColor: 'green', color: 'white', marginRight: '5px' }}
+                    >
+                      Salvar
+                    </button>
+                    <button onClick={handleCancelarEdicaoNomeArquivo} style={{ backgroundColor: 'grey', color: 'white' }}>
+                      Cancelar
+                    </button>
+                    <p style={{ marginTop: '5px' }}><strong>Tipo:</strong> {file.file_type}</p>
+                    <p><strong>Caminho:</strong> {file.file}</p>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <p style={{ margin: 0 }}><strong>Nome:</strong> {file.name}</p>
+                      <button
+                        onClick={() => handleIniciarEdicaoNomeArquivo(file)}
+                        style={{ backgroundColor: 'orange', color: 'white' }}
+                      >
+                        Editar Nome
+                      </button>
+                    </div>
+                    <p><strong>Tipo:</strong> {file.file_type}</p>
+                    <p><strong>Caminho/Link:</strong> {file.file}</p>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

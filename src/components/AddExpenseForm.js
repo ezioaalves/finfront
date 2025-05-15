@@ -54,12 +54,12 @@ function AddExpenseForm(props) {
         }
     };
     return (
-        <form onSubmit={handleSubmit} style={{ margin: '20px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px', maxWidth: '500px' }}>
-            <h2 style={{ textAlign: 'center' }}>
+        <form onSubmit={handleSubmit} >
+            <h2>
                 {props.modoEdicao ? 'Editar Despesa' : 'Adicionar Nova Despesa'}
             </h2>
 
-            <div style={{ marginBottom: '15px' }}>
+            <div >
                 <label htmlFor="descricao" style={{ display: 'block', marginBottom: '5px' }}>Descrição:</label>
                 <input type="text" id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} required />
             </div>

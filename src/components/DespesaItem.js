@@ -9,8 +9,8 @@ function DespesaItem(props) {
     }
 
     return (
-        <div className="despesa-item" style={{ border: '1px solid #eee', padding: '10px', margin: '10px', borderRadius: '5px' }}>
-            <h3>{props.descricao} (ID: {props.id})</h3>
+        <div className="despesa-item list-item">
+            <h3>{props.descricao}</h3>
             <p>Valor: R$ {props.valor ? props.valor.toFixed(2) : '0.00'}</p>
             <p>Data: {props.data}</p>
             <p>Categoria: {props.categoria}</p>

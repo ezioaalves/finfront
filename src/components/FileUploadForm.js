@@ -52,8 +52,8 @@ function FileUploadForm(props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ margin: '20px auto', padding: '20px', border: '1px solid #007bff', borderRadius: '8px', maxWidth: '500px' }}>
-      <h2 style={{ textAlign: 'center', color: '#007bff' }}>Upload de Arquivo</h2>
+    <form onSubmit={handleSubmit} >
+      <h2>Upload de Arquivo</h2>
       
       <div style={{ marginBottom: '15px' }}>
         <label htmlFor="fileInput" style={{ display: 'block', marginBottom: '5px' }}>Selecionar Arquivo:</label>
